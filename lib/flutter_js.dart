@@ -1,20 +1,15 @@
 import 'dart:convert';
 
-// Conditional imports for platform-specific code
-import 'dart:io' if (dart.library.html) 'dart:html' as io;
-
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_js_plus/javascript_runtime.dart';
 
-// Conditional imports: only import native runtimes on non-web platforms
-import 'package:flutter_js_plus/javascriptcore/jscore_runtime.dart'
-    if (dart.library.html) 'web_runtime_stub.dart';
-import 'package:flutter_js_plus/quickjs/quickjs_runtime2.dart'
-    if (dart.library.html) 'web_runtime_stub.dart';
 // Import web runtime - available on web, stub on native
 import 'package:flutter_js_plus/web/web_runtime.dart'
     if (dart.library.io) 'web_runtime_stub.dart';
+// Import native runtime getter - only available on native platforms
+import 'package:flutter_js_plus/src/runtime/get_runtime_native.dart'
+    if (dart.library.html) 'package:flutter_js_plus/src/runtime/get_runtime_native_stub.dart' as native_runtime;
 
 import './extensions/fetch.dart';
 import './extensions/handle_promises.dart';
@@ -45,20 +40,15 @@ JavascriptRuntime getJavascriptRuntime({
   if (kIsWeb) {
     // WebJavascriptRuntime is only available on web (via conditional import)
     runtime = WebJavascriptRuntime();
-  } else if ((io.Platform.isAndroid && !forceJavascriptCoreOnAndroid)) {
-    int stackSize = extraArgs?['stackSize'] ?? 1024 * 1024;
-    runtime = QuickJsRuntime2(stackSize: stackSize);
-    // FlutterJs engine = FlutterJs();
-    // runtime = QuickJsService(engine);
-  } else if (io.Platform.isWindows) {
-    runtime = QuickJsRuntime2();
-  } else if (io.Platform.isLinux) {
-    // runtime = FlutterJsLinuxWin()..init();
-    //runtime = JavascriptCoreRuntime(); //('f1.js');
-    runtime = QuickJsRuntime2();
   } else {
-    runtime = JavascriptCoreRuntime();
+    // On native platforms, use the native runtime getter
+    // This function uses Platform.isAndroid, etc., which are only available on native
+    runtime = native_runtime.getNativeRuntime(
+      forceJavascriptCoreOnAndroid: forceJavascriptCoreOnAndroid,
+      extraArgs: extraArgs ?? {},
+    );
   }
+  
   if (xhr) runtime.enableFetch();
   runtime.enableHandlePromises();
   return runtime;
