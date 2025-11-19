@@ -1,394 +1,390 @@
-# Flutter JS Plus plugin
+# Flutter JS Plus
 
-A Javascript engine to use with flutter. Now it is using QuickJS on Android through Dart ffi, JavascriptCore on iOS also through dart-ffi, and the browser's JavaScript engine on Web. The Javascript runtimes runs synchronously through the dart ffi on native platforms. So now you can run javascript code as a native citizen inside yours Flutter Apps (Android, iOS, Windows, Linux, macOS, and **Web** are all supported).
+A unified JavaScript runtime for Flutter that works seamlessly across all platforms: **Web**, **Android**, **iOS**, **Windows**, **macOS**, and **Linux**.
 
-In the previous versions we only get the result of evaluated expressions as String. 
+## Features
 
-**BUT NOW** we can do more with  flutter_js_plus, like run **xhr** and **fetch** http calls through Dart http library. We are supporting **Promises** as well.
+- ✅ **Cross-platform**: Single API works on all Flutter platforms
+- ✅ **Web Support**: Uses browser's native JavaScript engine via `dart:js_interop`
+- ✅ **Native Performance**: QuickJS on Android/Windows/Linux, JavaScriptCore on iOS/macOS
+- ✅ **Promise Support**: Automatically converts JavaScript Promises to Dart Futures (on web)
+- ✅ **Type Conversion**: Automatic conversion between JavaScript and Dart types
+- ✅ **Error Handling**: Proper exception handling with stack traces
+- ✅ **Zero Configuration**: Works out of the box on all platforms
 
-With flutter_js_plus Flutter applications can take advantage of great javascript libraries such as ajv (json schema validation), moment (DateTime parser and operations) running natively (no PlatformChannels needed) on all platforms including Android, iOS, and **Web**.
+## Installation
 
-On IOS this library relies on the native JavascriptCore provided by iOS SDK. In Android it uses the amazing and small Javascript Engine QuickJS [https://bellard.org/quickjs/](https://bellard.org/quickjs/) (A spetacular work of the Fabrice Bellard and Charlie Gordon).
-
-To debug JS code on iOS you need to set `javascriptRuntime.setInspectable(true);` and pass sourceUrl to `evaluate` (example: sourceUrl: 'script.js').
-
-On Android you could use JavascriptCore as well You just need add an Android dependency `implementation "com.github.fast-development.android-js-runtimes:fastdev-jsruntimes-jsc:0.3.4"` and pass `forceJavascriptCoreOnAndroid: true` to the function `getJavascriptRuntime`. 
-
-
-On MacOS the JavascriptCore, provided by the OSX is used. In Windows and Linux the engine used is the QuickJS. In the 0.4.0 version we borrowed the dart ffi source code from the flutter_qjs lib. `flutter_qjs` is a amazing package and they made a excelent work in build a good ffi bridge between Dart and JS, also doing the quickjs source code changes to allow it to run on WIndows. But, flutter_js_plus takes the approach to use JavascriptCore on IOS (mainly) to avoid refusals on the Apple Store, which state that `Apps may contain or run code that is not embedded in the binary (e.g. HTML5-based games, bots, etc.), as long as code distribution isn’t the main purpose of the app`. It also says `your app must use WebKit and JavaScript Core to run third-party software and should not attempt to extend or expose native platform APIs to third-party software;` Reference: https://developer.apple.com/app-store/review/guidelines/ [ Session  4.7]. So, we avoid to use quickjs in iOS apps, so flutter_js_plus provides an abstraction called JavascriptRuntime which runs using JavascriptCore on Apple devices and Desktop, QuickJS in Android, Windows and Linux, and the browser's JavaScript engine on Web.
-
-Flutter JS Plus allows to use Javascript to execute validations logic of TextFormField, also we can execute rule engines or redux logic shared from our web applications. The opportunities are huge.
-
-### Web Support
-
-flutter_js_plus now supports Flutter Web! When running on web, it uses the browser's native JavaScript engine through `dart:js_interop`. This means you can use the same JavaScript runtime API across all platforms, including web, without any code changes.
-
-**HTML/DOM Manipulation on Web:**
-On Flutter web, you can manipulate HTML elements and the DOM directly through JavaScript:
-
-```dart
-final runtime = getJavascriptRuntime();
-
-// Create and modify HTML elements
-runtime.evaluate('''
-  const div = document.createElement('div');
-  div.id = 'my-element';
-  div.innerHTML = 'Hello from JavaScript!';
-  div.style.color = 'blue';
-  document.body.appendChild(div);
-''');
-
-// Modify existing elements
-runtime.evaluate('''
-  const element = document.getElementById('my-element');
-  if (element) {
-    element.style.backgroundColor = 'yellow';
-    element.textContent = 'Updated content!';
-  }
-''');
-
-// Access and manipulate any DOM element
-runtime.evaluate('''
-  document.querySelectorAll('.my-class').forEach(el => {
-    el.style.display = 'none';
-  });
-''');
-```
-
-All standard browser APIs (`document`, `window`, `localStorage`, etc.) are available when running on web.
-
-
-The project is open source under MIT license. 
-
-The bindings for use to communicate with JavascriptCore through dart:ffi we borrowed it from the package [flutter_jscore](https://pub.dev/packages/flutter_jscore).
-
-Flutter JS provided the implementation to the QuickJS dart ffi bindings and also constructed a wrapper API to Dart which provides a unified API to evaluate javascript and communicate between Dart and Javascript through QuickJS and Javascript Core in a unified way. 
-
-This library also allows to call xhr and fetch on Javascript through Dart Http calls. We also provide the implementation which allows to evaluate promises.
-
-
-![](doc/flutter_js.png)
-Flutter JS on Mobile
-
-![](doc/macos-capture.png)
-Flutter JS on Desktop
-
-
-## Features:
-
-## Instalation
+Add `flutter_js_plus` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
   flutter_js_plus: ^0.0.1
 ```
 
-### iOS
+### Platform-Specific Setup
 
-Since flutter_js_plus uses the native JavascriptCore, no action is needed.
+#### Android
 
-### Android
-
-Change the minimum Android sdk version to 21 (or higher) in your `android/app/build.gradle` file.
-
-```
-minSdkVersion 21
-```
-
-## Release Deploy
-
-### Android
-
-Setup of proguard to release builds: setup your android/app/proguard-rules.pro file 
-with the content bellow.
-
-> Remember to merge with another configurations needed for 
-others plugins your app uses.
-
-```proguard-rules.pro
-#Flutter Wrapper
--keep class io.flutter.app.** { *; }
--keep class io.flutter.plugin.**  { *; }
--keep class io.flutter.util.**  { *; }
--keep class io.flutter.view.**  { *; }
--keep class io.flutter.**  { *; }
--keep class io.flutter.plugins.**  { *; }
--keep class de.prosiebensat1digital.** { *; }
-``` 
-
-Also add these lines to your `android -> buildTypes -> release` section of android/app/build.gradle file:
+Set minimum SDK version to 21 or higher in `android/app/build.gradle`:
 
 ```gradle
- minifyEnabled true
-  useProguard true
-
-  proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+android {
+    defaultConfig {
+        minSdkVersion 21
+    }
+}
 ```
- 
+
+#### iOS/macOS
+
+No additional setup required. Uses native JavaScriptCore.
+
+#### Web
+
+No additional setup required. Uses browser's JavaScript engine.
+
+#### Windows/Linux
+
+No additional setup required. Uses QuickJS.
+
+## Quick Start
+
+### Basic Usage
+
+```dart
+import 'package:flutter_js_plus/js_plus.dart';
+
+void main() async {
+  // Create a JavaScript runtime
+  final js = JsPlus();
+  
+  try {
+    // Evaluate simple expressions
+    final result = await js.evaluate('1 + 2');
+    print(result); // 3
+    
+    // Evaluate with variables
+    await js.evaluate('const x = 10;');
+    final sum = await js.evaluate('x + 5');
+    print(sum); // 15
+    
+    // Work with objects
+    final obj = await js.evaluate('''
+      ({ name: "Flutter", version: 3.0 })
+    ''');
+    print(obj); // {name: Flutter, version: 3.0}
+    
+    // Work with arrays
+    final arr = await js.evaluate('[1, 2, 3, 4, 5]');
+    print(arr); // [1, 2, 3, 4, 5]
+    
+  } catch (e) {
+    if (e is JsEvaluationException) {
+      print('JavaScript error: ${e.message}');
+    }
+  } finally {
+    // Always dispose when done
+    js.dispose();
+  }
+}
+```
+
+### Working with Promises (Web)
+
+On web, JavaScript Promises are automatically converted to Dart Futures:
+
+```dart
+final js = JsPlus();
+
+// Promise automatically becomes a Future
+final result = await js.evaluate('''
+  Promise.resolve(42)
+''');
+print(result); // 42
+
+// Async operations
+final data = await js.evaluate('''
+  fetch('https://api.example.com/data')
+    .then(response => response.json())
+''');
+print(data); // The JSON data
+
+js.dispose();
+```
+
+### Error Handling
+
+```dart
+final js = JsPlus();
+
+try {
+  await js.evaluate('throw new Error("Something went wrong")');
+} on JsEvaluationException catch (e) {
+  print('Error: ${e.message}');
+  print('Stack: ${e.stackTrace}');
+} finally {
+  js.dispose();
+}
+```
+
+### Type Conversion
+
+The runtime automatically converts JavaScript types to Dart types:
+
+```dart
+final js = JsPlus();
+
+// Numbers
+final num = await js.evaluate('42');
+print(num is int); // true
+
+// Strings
+final str = await js.evaluate('"Hello"');
+print(str is String); // true
+
+// Booleans
+final bool = await js.evaluate('true');
+print(bool is bool); // true
+
+// Objects → Maps
+final obj = await js.evaluate('{a: 1, b: 2}');
+print(obj is Map); // true
+print(obj['a']); // 1
+
+// Arrays → Lists
+final arr = await js.evaluate('[1, 2, 3]');
+print(arr is List); // true
+print(arr[0]); // 1
+
+js.dispose();
+```
+
+For advanced type conversion, use the `JsTypeConversion` utilities:
+
+```dart
+import 'package:flutter_js_plus/js_plus.dart';
+
+final js = JsPlus();
+final jsArray = await js.evaluate('[1, 2, 3]');
+final list = JsTypeConversion.jsArrayToList(jsArray);
+print(list); // [1, 2, 3]
+
+final jsObj = await js.evaluate('{a: 1}');
+final map = JsTypeConversion.jsObjectToMap(jsObj);
+print(map); // {a: 1}
+
+js.dispose();
+```
+
+## Platform-Specific Behavior
+
+### Web
+
+On Flutter Web, `flutter_js_plus` uses the browser's native JavaScript engine through `dart:js_interop`. This means:
+
+- Full access to browser APIs (`document`, `window`, `localStorage`, etc.)
+- DOM manipulation capabilities
+- Native Promise support (automatically converted to Futures)
+- No additional JavaScript engine bundled (uses browser's engine)
+
+**Example - DOM Manipulation (Web only):**
+
+```dart
+final js = JsPlus();
+
+// Create HTML elements
+await js.evaluate('''
+  const div = document.createElement('div');
+  div.id = 'my-element';
+  div.innerHTML = 'Hello from JavaScript!';
+  document.body.appendChild(div);
+''');
+
+// Modify elements
+await js.evaluate('''
+  const element = document.getElementById('my-element');
+  element.style.color = 'blue';
+''');
+
+js.dispose();
+```
+
+### Native Platforms
+
+On native platforms (Android, iOS, Windows, macOS, Linux), `flutter_js_plus` uses:
+
+- **Android**: QuickJS (default) or JavaScriptCore (if forced)
+- **iOS/macOS**: JavaScriptCore (native to Apple platforms)
+- **Windows/Linux**: QuickJS
+
+**Native Configuration:**
+
+```dart
+// Use JavaScriptCore on Android instead of QuickJS
+final js = JsPlus(
+  forceJavascriptCoreOnAndroid: true,
+);
+
+// Configure stack size for QuickJS
+final js = JsPlus(
+  extraArgs: {'stackSize': 2 * 1024 * 1024}, // 2MB
+);
+
+js.dispose();
+```
+
+## Advanced Usage
+
+### Sharing Data Between Evaluations
+
+```dart
+final js = JsPlus();
+
+// Set a variable
+await js.evaluate('const myVar = "Hello";');
+
+// Use it in another evaluation
+final result = await js.evaluate('myVar + " World"');
+print(result); // "Hello World"
+
+js.dispose();
+```
+
+### Complex JavaScript Code
+
+```dart
+final js = JsPlus();
+
+final result = await js.evaluate('''
+  (function() {
+    function factorial(n) {
+      return n <= 1 ? 1 : n * factorial(n - 1);
+    }
+    return factorial(5);
+  })()
+''');
+print(result); // 120
+
+js.dispose();
+```
+
+## API Reference
+
+### `JsPlus`
+
+Main class for JavaScript evaluation.
+
+#### Constructor
+
+```dart
+JsPlus({
+  bool forceJavascriptCoreOnAndroid = false,
+  Map<String, dynamic>? extraArgs,
+})
+```
+
+- `forceJavascriptCoreOnAndroid`: Use JavaScriptCore instead of QuickJS on Android
+- `extraArgs`: Additional arguments for native runtime (e.g., `{'stackSize': 1024 * 1024}`)
+
+#### Methods
+
+- `Future<dynamic> evaluate(String code)`: Evaluate JavaScript code and return the result
+- `void dispose()`: Dispose of the runtime and free resources
+
+### `JsEvaluationException`
+
+Exception thrown when JavaScript evaluation fails.
+
+- `String message`: Error message
+- `String? stackTrace`: JavaScript stack trace (if available)
+
+### `JsTypeConversion`
+
+Utility class for type conversion between JavaScript and Dart.
+
+- `List<dynamic>? jsArrayToList(dynamic value)`: Convert JS array to Dart List
+- `Map<String, dynamic>? jsObjectToMap(dynamic value)`: Convert JS object to Dart Map
+- `String listToJsArray(List<dynamic> list)`: Convert Dart List to JS array string
+- `String mapToJsObject(Map<String, dynamic> map)`: Convert Dart Map to JS object string
+
+## Limitations
+
+### Web
+
+- Uses `eval()` internally, which may be blocked by Content Security Policy (CSP) in some environments
+- JavaScript code runs in the global scope (be careful with variable pollution)
+- Some browser APIs may not be available depending on the context
+
+### Native
+
+- QuickJS has some limitations compared to full JavaScript engines (see [QuickJS documentation](https://bellard.org/quickjs/))
+- JavaScriptCore on iOS/macOS is the full engine, but has different performance characteristics than QuickJS
+
+## Safety Notes
+
+### Using `eval()` on Web
+
+This package uses JavaScript's `eval()` function on web platforms. While this is necessary for dynamic code evaluation, be aware that:
+
+- **Security**: Only evaluate code from trusted sources
+- **CSP**: Some Content Security Policies may block `eval()`
+- **Performance**: `eval()` can be slower than pre-compiled code
+
+### Memory Management
+
+Always call `dispose()` when you're done with a `JsPlus` instance, especially on native platforms:
+
+```dart
+final js = JsPlus();
+try {
+  // Use js...
+} finally {
+  js.dispose(); // Important!
+}
+```
 
 ## Examples
 
-Here is a small flutter app showing how to evaluate javascript code inside a flutter app
+See the `example/` directory for complete examples including:
 
+- Basic JavaScript evaluation
+- Promise handling
+- Type conversion
+- Error handling
+- DOM manipulation (web)
 
+## Migration from Legacy API
 
+If you're using the legacy `getJavascriptRuntime()` API, you can migrate to the new `JsPlus` API:
+
+**Before:**
 ```dart
-import 'package:flutter/material.dart';
-import 'dart:async';
-
-import 'package:flutter/services.dart';
-import 'package:flutter_js_plus/flutter_js.dart';
-
-void main() => runApp(MyApp());
-
-class MyApp extends StatefulWidget {
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  String _jsResult = '';
-  JavascriptRuntime flutterJs;
-  @override
-  void initState() {
-    super.initState();
-    
-    flutterJs = getJavascriptRuntime();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('FlutterJS Example'),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text('JS Evaluate Result: $_jsResult\n'),
-              SizedBox(height: 20,),
-              Padding(padding: EdgeInsets.all(10), child: Text('Click on the big JS Yellow Button to evaluate the expression bellow using the flutter_js_plus plugin'),),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text("Math.trunc(Math.random() * 100).toString();", style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),),
-              )
-            ],
-          ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.transparent, 
-          child: Image.asset('assets/js.ico'),
-          onPressed: () async {
-            try {
-              JsEvalResult jsResult = flutterJs.evaluate(
-                  "Math.trunc(Math.random() * 100).toString();");
-              setState(() {
-                _jsResult = jsResult.stringResult;
-              });
-            } on PlatformException catch (e) {
-              print('ERRO: ${e.details}');
-            }
-          },
-        ),
-      ),
-    );
-  }
-}
-
+final runtime = getJavascriptRuntime();
+final result = runtime.evaluate('1 + 2');
+print(result.stringResult);
+runtime.dispose();
 ```
 
-
-**How to call dart from Javascript**
-
-You can add a channel on `JavascriptRuntime` objects to receive calls from the Javascript engine:
-
-In the dart side:
-
+**After:**
 ```dart
-javascriptRuntime.onMessage('someChannelName', (dynamic args) {
-     print(args);
-});
+final js = JsPlus();
+final result = await js.evaluate('1 + 2');
+print(result); // Direct value, no need for .stringResult
+js.dispose();
 ```
 
+The legacy API is still available for backward compatibility.
 
-Now, if your javascript code calls `sendMessage('someChannelName', JSON.stringify([1,2,3]);` the above dart function provided as the second argument will be called
-with a List containing 1, 2, 3 as it elements.
+## Contributing
 
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Alternatives (and also why we think our library is better)
+## License
 
-There were another packages which provides alternatives to evaluate javascript in flutter projects:
+This project is open source under the MIT license.
 
-### https://pub.dev/packages/flutter_liquidcore
+## Acknowledgments
 
-Good, is based on https://github.com/LiquidPlayer/LiquidCore
-
-It is based on V8 engine so the exectuable library is huge (20Mb). So the final app will be huge too.
-
-
-### https://pub.dev/packages/interactive_webview
-
-Allows to evaluate javascript in a hidden webview. Does not add weight to size of the app, but a webview means a entire browser is in memory just to evaluate javascript code. So we think an embeddable engine is a way better solution.
-
-### https://pub.dev/packages/jsengine
-
-Based on jerryscript which is slower than quickjs. The jsengine package does not have implementation to iOS.
-
-### https://pub.dev/packages/flutter_jscore
-
-Uses Javascript Core in Android and IOS. We got the JavascriptCore bindings from this amazing package. But, by
-default we provides QuickJS as the javascript runtime on Android because it provides a smaller footprint. Also 
-our library adds support to ConsoleLog, SetTimeout, Xhr, Fetch and Promises to be used in the scripts evaluation 
-and allows your Flutter app to provide dartFunctions as channels through `onMessage` function to be called inside
-your javascript code.
-
-
-### https://pub.dev/packages/flutter_qjs
-
-Amazing package which does implement the javascript engine using quickjs through Dart ffi.
-The only difference is it uses quickjs also on IOS devices, which we understand would be problematic to pass Apple Store Review process. In the flutter_js 0.4.0 version, which we
-added support to Desktop and also improved the Dart/Js integration, we borrowed the C function bindings and Dart/JS conversions and integrations from the flutter_qjs source code. We just adapted it to support xhr, fetch and to keep the same interface provided on flutter_js through the class JavascriptRuntime.
-
-
-## Small Apk size
-
-A hello world flutter app, according flutter docs has 4.2 Mb or 4.6 Mb in size.
-
-https://flutter.dev/docs/perf/app-size#android
-
-
-Bellow you can see the apk sizes of the `example app` generated with *flutter_js*:
-
-```bash
-
-|master ✓| → flutter build apk --split-per-abi
-
-✓ Built build/app/outputs/apk/release/app-armeabi-v7a-release.apk (5.4MB).
-✓ Built build/app/outputs/apk/release/app-arm64-v8a-release.apk (5.9MB).
-✓ Built build/app/outputs/apk/release/app-x86_64-release.apk (6.1MB).
-```
-
-
-## Ajv
-
-We just added an example of use of the amazing js library [Ajv](https://ajv.js.org/) which allow to bring state of the art json schema validation features
-to the Flutter world. We can see the Ajv examples here: https://github.com/abner/flutter_js/blob/master/example/lib/ajv_example.dart 
-
-
-See bellow the screens we added to the example app:
-
-### IOS
-
-![ios_form](doc/ios_ajv_form.png)
-
-![ios_ajv_result](doc/ios_ajv_result.png)
-
-### Android
-
-![android_form](doc/android_ajv_form.png)
-
-![android_ajv_result](doc/android_ajv_result.png)
-
-
-## MACOS
-
-* To solve `Command Line Tool - Error - xcrun: error: unable to find utility “xcodebuild”, not a developer tool or in PATH`
-
-> sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-
-In Catalina with XCode 12 i needed to install ruby 2.7.2 in order to install `cocoapods` (Also needed to Flutter on IOS). So i installed `brew`and after `rbenv`.
-
-To enable http calls, add this to your files: 
-
-* DebugProfile.entitlements
-```plist
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>com.apple.security.app-sandbox</key>
-	<true/>
-	<key>com.apple.security.cs.allow-jit</key>
-	<true/>
-	<key>com.apple.security.network.client</key>
-	<true/>
-	<key>com.apple.security.network.server</key>
-	<true/>
-</dict>
-</plist>
-
-```
-
-* Release.entitlements
-```plist
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>com.apple.security.app-sandbox</key>
-	<true/>
-	<key>com.apple.security.network.client</key>
-	<true/>
-	<key>com.apple.security.network.server</key>
-	<true/>
-</dict>
-</plist>
-```
-
-
-## Windows and Linux
-
-The C wrapper library is hosted on this github repository: https://github.com/abner/quickjs-c-bridge 
-
-We just separated the code to allow build it and in this repository we have only the released shared library, so each application using the flutter_js does not need to keep recompiling it all the time
-
-## QuickJs Android shared libraries
-
-The library wrapper, both QuickJS and JavascriptCore, are also compiled in a separated repository: https://github.com/fast-development/android-js-runtimes
-
-With the library being compiled and published to jitpack, applications using the wrappers, through flutter_js does not need to compile the shared library using Android NDK.
-
-
-## Unit Testing javascript evaluation
-
-We can unit test evaluation of expressions on flutter_js using the desktop platforms (windows, linux and macos).
-
-For `Windows` and `Linux` you need to build your app Desktop executable first: `flutter build -d windows` or `flutter build -d linux`.
-
-On Windows, after build your application for the first time, at least, add the path `build\windows\runner\Debug` (the absolute path) to your environment path.
-
-In powershell, just run `$env:path += ";${pwd}\build\windows\runner\Debug"`. Now you can run the test in the command line session where you added the `\build\windows\runner\Debug` into the path.
-
-For `Linux` you need to exports an environment variable called `LIBQUICKJSC_TEST_PATH` pointing to `build/linux/debug/bundle/lib/libquickjs_c_bridge_plugin.so`. eg: `export LIBQUICKJSC_TEST_PATH="$PWD/build/linux/debug/bundle/lib/libquickjs_c_bridge_plugin.so"`
-
-
-To run the test integrated Visual Studio Code, you will need to setup a launcher to the `.vscode/launch.json` file,
-so you can fill-in the build folder into the `PATH` on Windows and the `LIBQUICKJSC_TEST_PATH` for linux:
-
-```json
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "test-with-flutterjs",
-            "type": "dart",
-            "program": "test/flutter_js_test.dart",
-            "windows": {
-                "env": {
-                    "PATH": "${env:Path};${workspaceFolder}\\example\\build\\windows\\runner\\Debug"
-                }
-            },
-            "linux": {
-                "env": {
-                    "LIBQUICKJSC_TEST_PATH": "${workspaceFolder}/example/build/linux/debug/bundle/lib/libquickjs_c_bridge_plugin.so"
-                }
-            },
-            "request": "launch"
-        }
-    ]
-}
-```
-
-> For running unit tests on MacOSx no extra steps are needed.
+- QuickJS by Fabrice Bellard and Charlie Gordon
+- JavaScriptCore bindings from [flutter_jscore](https://pub.dev/packages/flutter_jscore)
+- QuickJS FFI bindings inspired by [flutter_qjs](https://pub.dev/packages/flutter_qjs)

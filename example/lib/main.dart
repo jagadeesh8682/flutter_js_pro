@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_js_plus/flutter_js.dart';
 import 'package:flutter_js_example/ajv_example.dart';
+import 'package:flutter_js_example/js_plus_example.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -145,6 +146,15 @@ class _FlutterJsHomeScreenState extends State<FlutterJsHomeScreen> {
                 ),
               ),
               child: const Text('See Ajv Example'),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (ctx) => const JsPlusExample(),
+                ),
+              ),
+              child: const Text('See New JsPlus API Example'),
             ),
             SizedBox.fromSize(size: const Size(double.maxFinite, 20)),
             ElevatedButton(
