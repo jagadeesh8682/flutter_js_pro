@@ -1,4 +1,4 @@
-# Flutter JS Plus
+# Flutter JS pro
 
 A unified JavaScript runtime for Flutter that works seamlessly across all platforms: **Web**, **Android**, **iOS**, **Windows**, **macOS**, and **Linux**.
 
@@ -14,11 +14,11 @@ A unified JavaScript runtime for Flutter that works seamlessly across all platfo
 
 ## Installation
 
-Add `flutter_js_plus` to your `pubspec.yaml`:
+Add `flutter_js_pro` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_js_plus: ^0.0.1
+  flutter_js_pro: ^0.0.1
 ```
 
 ### Platform-Specific Setup
@@ -52,7 +52,7 @@ No additional setup required. Uses QuickJS.
 ### Basic Usage
 
 ```dart
-import 'package:flutter_js_plus/js_plus.dart';
+import 'package:flutter_js_pro/js_plus.dart';
 
 void main() async {
   // Create a JavaScript runtime
@@ -162,7 +162,7 @@ js.dispose();
 For advanced type conversion, use the `JsTypeConversion` utilities:
 
 ```dart
-import 'package:flutter_js_plus/js_plus.dart';
+import 'package:flutter_js_pro/js_plus.dart';
 
 final js = JsPlus();
 final jsArray = await js.evaluate('[1, 2, 3]');
@@ -180,7 +180,7 @@ js.dispose();
 
 ### Web
 
-On Flutter Web, `flutter_js_plus` uses the browser's native JavaScript engine through `dart:js_interop`. This means:
+On Flutter Web, `flutter_js_pro` uses the browser's native JavaScript engine through `dart:js_interop`. This means:
 
 - Full access to browser APIs (`document`, `window`, `localStorage`, etc.)
 - DOM manipulation capabilities
@@ -211,7 +211,7 @@ js.dispose();
 
 ### Native Platforms
 
-On native platforms (Android, iOS, Windows, macOS, Linux), `flutter_js_plus` uses:
+On native platforms (Android, iOS, Windows, macOS, Linux), `flutter_js_pro` uses:
 
 - **Android**: QuickJS (default) or JavaScriptCore (if forced)
 - **iOS/macOS**: JavaScriptCore (native to Apple platforms)
